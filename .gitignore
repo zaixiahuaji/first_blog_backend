@@ -1,10 +1,22 @@
-# compiled output
-/dist
-/node_modules
-/build
+############################
+# NestJS / Node.js
+############################
 
-# Logs
-logs
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# test / coverage
+coverage/
+.nyc_output/
+
+# logs
+logs/
 *.log
 npm-debug.log*
 pnpm-debug.log*
@@ -12,45 +24,61 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# OS
-.DS_Store
+# runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Tests
-/coverage
-/.nyc_output
+# diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# IDEs and editors
-/.idea
+############################
+# Caches / temp
+############################
+
+.eslintcache
+.cache/
+.temp/
+.tmp/
+*.cache
+
+# editor swap files
+*.swp
+*.swo
+
+############################
+# Environment files
+############################
+
+.env
+.env.*.local
+
+############################
+# IDEs / Editors
+############################
+
+.idea/
 .project
 .classpath
+.settings/
 .c9/
 *.launch
-.settings/
 *.sublime-workspace
+*.iml
 
-# IDE - VSCode
+# VSCode (keep workspace settings)
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+############################
+# OS files
+############################
 
-# temp directory
-.temp
-.tmp
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
