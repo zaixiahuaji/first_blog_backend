@@ -71,6 +71,7 @@ const DEFAULT_POSTS: DeepPartial<Post>[] = [
 @Injectable()
 export class PostsService {
   private embeddingsBackfilled = false;
+  private backfillPromise: Promise<void> | null = null;
 
   constructor(
     @InjectRepository(Post)
@@ -106,19 +107,27 @@ export class PostsService {
     // 没配置 OPENAI_API_KEY 就先跳过，避免影响基础 CRUD/关键词搜索
     if (!this.embeddingsService.apiKey) return;
 
-    const missing = await this.postRepository.find({
-      where: { embedding: IsNull() },
-      order: { createdAt: 'ASC' },
+    if (this.backfillPromise) return this.backfillPromise;
+
+    this.backfillPromise = (async () => {
+      const missing = await this.postRepository.find({
+        where: { embedding: IsNull() },
+        order: { createdAt: 'ASC' },
+      });
+
+      for (const post of missing) {
+        const text = this.buildEmbeddingText(post);
+        const embedding = await this.embeddingsService.embedText(text);
+        post.embedding = embedding;
+        await this.postRepository.save(post);
+      }
+
+      this.embeddingsBackfilled = true;
+    })().finally(() => {
+      this.backfillPromise = null;
     });
 
-    for (const post of missing) {
-      const text = this.buildEmbeddingText(post);
-      const embedding = await this.embeddingsService.embedText(text);
-      post.embedding = embedding;
-      await this.postRepository.save(post);
-    }
-
-    this.embeddingsBackfilled = true;
+    return this.backfillPromise;
   }
 
   async findAll(queryDto: ListPostsQueryDto): Promise<PaginatedResult<Post>> {
@@ -192,7 +201,9 @@ export class PostsService {
         this.buildEmbeddingText(post),
       );
     }
-    return this.postRepository.save(post);
+    const saved = await this.postRepository.save(post);
+    delete (saved as { embedding?: unknown }).embedding;
+    return saved;
   }
 
   async update(id: string, dto: UpdatePostDto): Promise<Post> {
@@ -209,7 +220,9 @@ export class PostsService {
       );
     }
 
-    return this.postRepository.save(post);
+    const saved = await this.postRepository.save(post);
+    delete (saved as { embedding?: unknown }).embedding;
+    return saved;
   }
 
   async remove(id: string): Promise<void> {

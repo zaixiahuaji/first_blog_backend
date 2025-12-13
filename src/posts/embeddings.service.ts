@@ -19,7 +19,14 @@ export class EmbeddingsService {
   }
 
   get baseUrl(): string {
-    return this.config.get<string>('OPENAI_BASE_URL', 'https://api.openai.com');
+    const raw = this.config.get<string>(
+      'OPENAI_BASE_URL',
+      'https://api.openai.com',
+    );
+
+    // 兼容配置成 ".../v1" 或 ".../v1/" 的情况，统一到不带版本号的 baseUrl
+    const trimmed = raw.replace(/\/+$/, '');
+    return trimmed.replace(/\/v1$/, '');
   }
 
   get apiKey(): string {
@@ -35,7 +42,7 @@ export class EmbeddingsService {
     }
 
     const res = await fetch(
-      `${this.baseUrl.replace(/\/$/, '')}/v1/embeddings`,
+      `${this.baseUrl}/v1/embeddings`,
       {
         method: 'POST',
         headers: {
@@ -45,6 +52,8 @@ export class EmbeddingsService {
         body: JSON.stringify({
           model: this.model,
           input: text,
+          // ModelScope(OpenAI-compatible) 需要显式指定 encoding_format
+          encoding_format: 'float',
         }),
       },
     );

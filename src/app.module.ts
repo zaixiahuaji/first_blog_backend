@@ -7,6 +7,7 @@ import { PostsModule } from './posts/posts.module';
 import { ensureDatabaseExists } from './db/ensure-database';
 import { ensurePgVectorExtension } from './db/ensure-extensions';
 import { AuthModule } from './auth/auth.module';
+import { DbIndexesService } from './db/db-indexes.service';
 
 @Module({
   imports: [
@@ -55,6 +56,6 @@ import { AuthModule } from './auth/auth.module';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, DbIndexesService],
 })
 export class AppModule {}

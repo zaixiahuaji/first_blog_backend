@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-const DEFAULT_EMBEDDING_DIMS = 1536;
+const DEFAULT_EMBEDDING_DIMS = 1024;
 const VECTOR_COLUMN_TYPE = 'vector' as unknown as NonNullable<
   ColumnOptions['type']
 >;
@@ -48,6 +48,7 @@ export class Post {
     // pgvector 扩展的列类型，TypeORM 类型系统里没有 vector，所以需要 as any
     type: VECTOR_COLUMN_TYPE,
     nullable: true,
+    select: false,
     length: DEFAULT_EMBEDDING_DIMS,
     transformer: {
       to: (value?: number[] | null) =>
