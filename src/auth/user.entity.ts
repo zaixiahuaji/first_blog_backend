@@ -11,6 +11,9 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ unique: true, length: 12 })
+  username: string;
+
   @Column({ unique: true, length: 255 })
   email: string;
 

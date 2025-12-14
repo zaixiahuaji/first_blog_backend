@@ -28,6 +28,9 @@ export class Post {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ length: 12 })
+  username: string;
+
   @Column({ length: 255 })
   title: string;
 

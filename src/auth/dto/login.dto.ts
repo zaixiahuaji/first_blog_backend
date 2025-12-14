@@ -1,13 +1,35 @@
-import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class LoginDto {
-  @ApiProperty({ example: 'admin@example.com', maxLength: 255 })
+  @ApiPropertyOptional({ example: 'admin@example.com', maxLength: 255 })
+  @ValidateIf((o) => o.email !== undefined)
   @IsEmail()
   @MaxLength(255)
-  email: string;
+  email?: string;
 
-  @ApiProperty({ example: 'admin123' })
+  @ApiPropertyOptional({
+    example: 'admin_user',
+    description: '用户名或邮箱至少填一个',
+    maxLength: 12,
+  })
+  @ValidateIf((o) => o.username !== undefined)
+  @IsString()
+  @MaxLength(12)
+  @Matches(/^[\p{L}\p{N}_]+$/u, {
+    message: '用户名仅允许中文、字母、数字或下划线',
+  })
+  username?: string;
+
+  @ApiPropertyOptional({ example: 'admin123' })
   @IsString()
   @IsNotEmpty()
   password: string;

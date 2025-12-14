@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, IsNull, Repository } from 'typeorm';
 import { Post } from './post.entity';
@@ -17,8 +21,14 @@ export type PaginatedResult<T> = {
 
 type SortField = NonNullable<ListPostsQueryDto['sort']>;
 
+type CurrentUser = {
+  username?: string;
+  role?: string;
+};
+
 const DEFAULT_POSTS: DeepPartial<Post>[] = [
   {
+    username: 'admin',
     title: '模拟复兴',
     category: 'tech',
     date: '2023-11-05',
@@ -27,6 +37,7 @@ const DEFAULT_POSTS: DeepPartial<Post>[] = [
       '在触摸屏主导的今天，物理反馈的缺失让人感到空虚。机械键盘的敲击声、老式收音机的旋钮阻尼，这些触觉体验不仅仅是怀旧，更是人机交互中不可或缺的确认感。模拟复兴不是倒退，而是重新找回被数字洪流冲刷掉的质感。',
   },
   {
+    username: 'admin',
     title: '霓虹夜与城市之光',
     category: 'visuals',
     date: '2023-10-31',
@@ -35,6 +46,7 @@ const DEFAULT_POSTS: DeepPartial<Post>[] = [
       '赛博朋克美学不仅仅是霓虹灯和雨夜。它探讨的是高科技与低生活的反差。80年代末的动画作品通过高对比度的色彩、复杂的机械细节和阴郁的氛围，构建了一个既迷人又危险的未来。这种视觉语言正在现代网页设计中复苏，提醒我们关注技术的阴暗面。',
   },
   {
+    username: 'admin',
     title: '合成器基础',
     category: 'music',
     date: '2023-10-15',
@@ -43,6 +55,7 @@ const DEFAULT_POSTS: DeepPartial<Post>[] = [
       '合成器不仅仅是制造声音的机器，它们是塑造情绪的工具。FM合成带来金属质感的冰冷音色，而减法合成则提供温暖厚实的基底。掌握波形、包络和滤波器的关系，你就能从无到有地构建出属于未来的声音图景。',
   },
   {
+    username: 'admin',
     title: '磁带维护 101',
     category: 'tech',
     date: '2023-09-22',
@@ -51,6 +64,7 @@ const DEFAULT_POSTS: DeepPartial<Post>[] = [
       '磁带是脆弱的记忆载体，但也是有温度的。当磁带缠绕时，不要慌张。准备一支六棱铅笔，轻轻插入卷轴孔，顺时针缓慢旋转。这不仅是修复物理介质，更是一场与过去时光的微型手术。保持耐心，记忆终将归位。',
   },
   {
+    username: 'admin',
     title: '虚空中的矢量',
     category: 'visuals',
     date: '2023-09-10',
@@ -59,6 +73,7 @@ const DEFAULT_POSTS: DeepPartial<Post>[] = [
       '早期计算机图形学的限制造就了独特的矢量美学。在算力匮乏的年代，仅用简单的线条和几何形状构建三维空间，需要极大的创造力。这种极简主义在今天依然具有震撼力，它告诉我们：限制往往是创新的催化剂。',
   },
   {
+    username: 'admin',
     title: '暗潮播放列表',
     category: 'music',
     date: '2023-08-30',
@@ -169,7 +184,7 @@ export class PostsService {
 
     if (q) {
       qb.andWhere(
-        '(post.title ILIKE :q OR post.excerpt ILIKE :q OR post.content ILIKE :q)',
+        '(post.title ILIKE :q OR post.excerpt ILIKE :q OR post.content ILIKE :q OR post.username ILIKE :q)',
         { q: `%${q}%` },
       );
     }
@@ -194,8 +209,28 @@ export class PostsService {
     return post;
   }
 
-  async create(dto: CreatePostDto): Promise<Post> {
-    const post = this.postRepository.create(dto);
+  private assertCurrentUser(user: CurrentUser): asserts user is {
+    username: string;
+    role: string;
+  } {
+    if (!user?.username || !user?.role) {
+      throw new BadRequestException('Missing user context');
+    }
+  }
+
+  private assertAuthorOrAdmin(
+    user: { username: string; role: string },
+    post: Post,
+  ) {
+    if (user.role === 'admin') return;
+    if (post.username !== user.username) {
+      throw new ForbiddenException('Only author can operate this post');
+    }
+  }
+
+  async create(dto: CreatePostDto, currentUser: CurrentUser): Promise<Post> {
+    this.assertCurrentUser(currentUser);
+    const post = this.postRepository.create({ ...dto, username: currentUser.username });
     if (this.embeddingsService.apiKey) {
       post.embedding = await this.embeddingsService.embedText(
         this.buildEmbeddingText(post),
@@ -206,8 +241,15 @@ export class PostsService {
     return saved;
   }
 
-  async update(id: string, dto: UpdatePostDto): Promise<Post> {
+  async update(
+    id: string,
+    dto: UpdatePostDto,
+    currentUser: CurrentUser,
+  ): Promise<Post> {
+    this.assertCurrentUser(currentUser);
     const post = await this.findOne(id);
+    this.assertAuthorOrAdmin(currentUser, post);
+
     Object.assign(post, dto);
 
     const shouldReEmbed =
@@ -225,8 +267,10 @@ export class PostsService {
     return saved;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, currentUser: CurrentUser): Promise<void> {
+    this.assertCurrentUser(currentUser);
     const post = await this.findOne(id);
+    this.assertAuthorOrAdmin(currentUser, post);
     await this.postRepository.remove(post);
   }
 }
