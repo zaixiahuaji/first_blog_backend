@@ -7,6 +7,7 @@ export type JwtPayload = {
   sub: string;
   email: string;
   role: string;
+  username?: string;
 };
 
 @Injectable()
@@ -21,6 +22,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   validate(payload: JwtPayload) {
     // 这里返回的对象会挂到 req.user
-    return { userId: payload.sub, email: payload.email, role: payload.role };
+    return {
+      userId: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      username: payload.username,
+    };
   }
 }

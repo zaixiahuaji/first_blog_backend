@@ -8,6 +8,7 @@ import {
   Patch,
   Post as HttpPost,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -18,6 +19,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { PostsService } from './posts.service';
 import { Post } from './post.entity';
 import { ListPostsQueryDto } from './dto/list-posts.query.dto';
@@ -51,8 +53,11 @@ export class PostsController {
   @ApiBearerAuth('BearerAuth')
   @ApiUnauthorizedResponse({ description: '未登录或 token 无效' })
   @ApiOperation({ summary: '创建文章（需要登录）' })
-  create(@Body() dto: CreatePostDto): Promise<Post> {
-    return this.postsService.create(dto);
+  create(
+    @Req() req: Request,
+    @Body() dto: CreatePostDto,
+  ): Promise<Post> {
+    return this.postsService.create(dto, req.user as any);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -63,9 +68,10 @@ export class PostsController {
   @ApiParam({ name: 'id', description: '文章 UUID' })
   update(
     @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() req: Request,
     @Body() dto: UpdatePostDto,
   ): Promise<Post> {
-    return this.postsService.update(id, dto);
+    return this.postsService.update(id, dto, req.user as any);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -74,7 +80,10 @@ export class PostsController {
   @ApiUnauthorizedResponse({ description: '未登录或 token 无效' })
   @ApiOperation({ summary: '删除文章（需要登录）' })
   @ApiParam({ name: 'id', description: '文章 UUID' })
-  async remove(@Param('id', new ParseUUIDPipe()) id: string): Promise<void> {
-    await this.postsService.remove(id);
+  async remove(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() req: Request,
+  ): Promise<void> {
+    await this.postsService.remove(id, req.user as any);
   }
 }
