@@ -1,98 +1,77 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# cs_vue3_backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+基于 NestJS + TypeORM 的后端项目，默认连接 PostgreSQL（推荐使用 `pgvector/pgvector:pg16` 以支持向量检索）。
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 本地开发
 
-## Description
+### 1) 启动数据库（pgvector）
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+按你的习惯直接运行（PowerShell）：
 
-## Project setup
-
-```bash
-$ npm install
+```powershell
+docker run -d `
+  --name postgres-vector `
+  -p 5432:5432 `
+  -e POSTGRES_USER=postgres `
+  -e POSTGRES_PASSWORD=postgres `
+  -e POSTGRES_DB=appdb `
+  -v pgdata:/var/lib/postgresql/data `
+  --restart unless-stopped `
+  pgvector/pgvector:pg16 `
+  -c shared_preload_libraries=vector
 ```
 
-## Compile and run the project
+> 如果你改用 `docker-compose up -d`，请确保 `docker-compose.yml` 使用的是 `pgvector/pgvector:*`，否则项目启动时创建 `vector` 扩展会失败。
+
+### 2) 配置环境变量
+
+复制一份示例配置：
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cp .env.example .env
 ```
 
-## Run tests
+按需修改 `.env`（仓库已通过 `.gitignore` 忽略 `.env`）。
+
+### 3) 安装依赖并启动
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
+npm run start:dev
 ```
 
-## Deployment
+服务默认监听：`http://localhost:3000`（可通过 `.env` 的 `PORT` 修改）。
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## API 文档
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- Swagger UI：`http://localhost:3000/api-docs-ui`
+- Swagger JSON：`http://localhost:3000/api-docs`
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## 功能概览
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Auth
 
-## Resources
+- `POST /api/auth/register`：注册用户（默认角色 `user`）
+- `POST /api/auth/login`：登录获取 `access_token`（JWT）
 
-Check out a few resources that may come in handy when working with NestJS:
+开发期会在启动时自动确保存在一个管理员账号（可在 `.env` 里用 `ADMIN_*` 覆盖）：
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- 用户名：`admin`
+- 邮箱：`admin@example.com`
+- 密码：`admin123`
 
-## Support
+### Posts
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- `GET /api/posts`：文章列表（分页/排序/筛选）
+  - `q`：ILIKE 关键词搜索
+  - `vectorQ`：语义搜索（pgvector，相似度排序；需要配置 `OPENAI_API_KEY`）
+- `GET /api/posts/:id`：文章详情
+- `POST /api/posts`：创建（需要 JWT Bearer）
+- `PATCH /api/posts/:id`：更新（需要 JWT Bearer）
+- `DELETE /api/posts/:id`：删除（需要 JWT Bearer）
 
-## Stay in touch
+## 备注
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- 项目启动时会自动创建数据库（若不存在）并执行 `CREATE EXTENSION IF NOT EXISTS vector`。
+- `TypeORM synchronize: true` 仅建议用于开发环境。
 
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
