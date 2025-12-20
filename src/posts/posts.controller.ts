@@ -25,6 +25,10 @@ import { Post } from './post.entity';
 import { ListPostsQueryDto } from './dto/list-posts.query.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import {
+  PostsCategoriesStatsDto,
+  PostsTotalDto,
+} from './dto/posts-stats.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('posts')
@@ -39,6 +43,23 @@ export class PostsController {
   @ApiOkResponse({ description: '分页列表' })
   findAll(@Query() query: ListPostsQueryDto) {
     return this.postsService.findAll(query);
+  }
+
+  @Get('stats/total')
+  @ApiOperation({ summary: '获取文章总数' })
+  @ApiOkResponse({ description: '文章总数', type: PostsTotalDto })
+  getTotal(): Promise<PostsTotalDto> {
+    return this.postsService.getTotal();
+  }
+
+  @Get('stats/categories')
+  @ApiOperation({ summary: '获取各分类文章数量' })
+  @ApiOkResponse({
+    description: '各分类文章数量',
+    type: PostsCategoriesStatsDto,
+  })
+  getCategoriesStats(): Promise<PostsCategoriesStatsDto> {
+    return this.postsService.getCategoriesStats();
   }
 
   @Get(':id')

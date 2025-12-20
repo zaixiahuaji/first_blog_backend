@@ -11,6 +11,10 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { ListPostsQueryDto } from './dto/list-posts.query.dto';
 import { NotFoundException } from '@nestjs/common';
 import { EmbeddingsService } from './embeddings.service';
+import {
+  PostsCategoriesStatsDto,
+  PostsTotalDto,
+} from './dto/posts-stats.dto';
 
 export type PaginatedResult<T> = {
   items: T[];
@@ -207,6 +211,31 @@ export class PostsService {
     const post = await this.postRepository.findOne({ where: { id } });
     if (!post) throw new NotFoundException('Post not found');
     return post;
+  }
+
+  async getTotal(): Promise<PostsTotalDto> {
+    await this.ensureSeeded();
+    const total = await this.postRepository.count();
+    return { total };
+  }
+
+  async getCategoriesStats(): Promise<PostsCategoriesStatsDto> {
+    await this.ensureSeeded();
+
+    const rows = await this.postRepository
+      .createQueryBuilder('post')
+      .select('post.category', 'category')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('post.category')
+      .orderBy('post.category', 'ASC')
+      .getRawMany<{ category: string; count: string }>();
+
+    return {
+      categories: rows.map((row) => ({
+        category: row.category,
+        count: Number(row.count),
+      })),
+    };
   }
 
   private assertCurrentUser(user: CurrentUser): asserts user is {
