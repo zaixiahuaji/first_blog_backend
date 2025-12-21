@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -101,7 +102,10 @@ const DEFAULT_POSTS: SeedPost[] = [
 @Injectable()
 export class PostsService {
   private embeddingsBackfilled = false;
+  private embeddingsServiceDisabled = false;
+  private vectorSearchDisabled = false;
   private backfillPromise: Promise<void> | null = null;
+  private readonly logger = new Logger(PostsService.name);
 
   constructor(
     @InjectRepository(Post)
@@ -146,14 +150,31 @@ export class PostsService {
       where: { slug: 'other' },
     });
     if (!other) {
-      throw new Error('System category "other" is missing.');
+      this.logger.warn('System category "other" is missing; auto-creating.');
+      const created = this.categoryRepository.create({
+        slug: 'other',
+        name: '其他',
+        color: '#00aaaa',
+        sortOrder: 40,
+        isActive: true,
+        isSystem: true,
+      });
+      const saved = await this.categoryRepository.save(created);
+      return this.seedPostsWithFallback(saved.id, idBySlug);
     }
 
+    await this.seedPostsWithFallback(other.id, idBySlug);
+  }
+
+  private async seedPostsWithFallback(
+    otherCategoryId: string,
+    idBySlug: Map<string, string>,
+  ): Promise<void> {
     const seeded = this.postRepository.create(
       DEFAULT_POSTS.map((seed) => ({
         username: seed.username,
         title: seed.title,
-        categoryId: idBySlug.get(seed.categorySlug) ?? other.id,
+        categoryId: idBySlug.get(seed.categorySlug) ?? otherCategoryId,
         date: seed.date,
         excerpt: seed.excerpt,
         content: seed.content,
@@ -178,22 +199,40 @@ export class PostsService {
     // 没配置 OPENAI_API_KEY 就先跳过，避免影响基础 CRUD/关键词搜索
     if (!this.embeddingsService.apiKey) return;
 
+    // 外部 embeddings 服务不可用时，不要影响基础 CRUD
+    if (this.embeddingsServiceDisabled) return;
+
     if (this.backfillPromise) return this.backfillPromise;
 
     this.backfillPromise = (async () => {
-      const missing = await this.postRepository.find({
-        where: { embedding: IsNull() },
-        order: { createdAt: 'ASC' },
-      });
+      try {
+        const missing = await this.postRepository.find({
+          where: { embedding: IsNull() },
+          order: { createdAt: 'ASC' },
+        });
 
-      for (const post of missing) {
-        const text = this.buildEmbeddingText(post);
-        const embedding = await this.embeddingsService.embedText(text);
-        post.embedding = embedding;
-        await this.postRepository.save(post);
+        for (const post of missing) {
+          const text = this.buildEmbeddingText(post);
+          try {
+            const embedding = await this.embeddingsService.embedText(text);
+            post.embedding = embedding;
+            await this.postRepository.save(post);
+          } catch (e) {
+            this.embeddingsServiceDisabled = true;
+            this.logger.warn(
+              'Embeddings backfill failed; disabled for this run.',
+            );
+            this.logger.debug((e as any)?.stack ?? String(e));
+            return;
+          }
+        }
+
+        this.embeddingsBackfilled = true;
+      } catch (e) {
+        this.embeddingsServiceDisabled = true;
+        this.logger.warn('Embeddings backfill failed; disabled for this run.');
+        this.logger.debug((e as any)?.stack ?? String(e));
       }
-
-      this.embeddingsBackfilled = true;
     })().finally(() => {
       this.backfillPromise = null;
     });
@@ -205,13 +244,13 @@ export class PostsService {
     queryDto: ListPostsQueryDto,
   ): Promise<PaginatedResult<PostDto>> {
     await this.ensureSeeded();
-    await this.backfillEmbeddingsOnce();
+    void this.backfillEmbeddingsOnce();
 
     const page = queryDto.page ?? 1;
     const limit = queryDto.limit ?? 20;
     const sort = queryDto.sort ?? 'createdAt';
     const order = queryDto.order ?? 'DESC';
-    const q = this.normalizeQuery(queryDto.q);
+    let q = this.normalizeQuery(queryDto.q);
     const vectorQ = this.normalizeQuery(queryDto.vectorQ);
     const categorySlug = queryDto.category;
 
@@ -231,26 +270,57 @@ export class PostsService {
 
     // vectorQ 优先：有语义搜索就走 pgvector；否则走原有 ILIKE 关键词搜索
     if (vectorQ) {
-      if (!this.embeddingsService.apiKey) {
-        throw new Error(
-          'Vector search requested but OPENAI_API_KEY is missing.',
-        );
+      if (
+        this.vectorSearchDisabled ||
+        this.embeddingsServiceDisabled ||
+        !this.embeddingsService.apiKey
+      ) {
+        q = q || vectorQ;
+      } else {
+        let queryEmbedding: number[] | null = null;
+        try {
+          queryEmbedding = await this.embeddingsService.embedText(vectorQ);
+        } catch (e) {
+          this.embeddingsServiceDisabled = true;
+          this.logger.warn(
+            'Embeddings service failed; fallback to keyword search.',
+          );
+          this.logger.debug((e as any)?.stack ?? String(e));
+          q = q || vectorQ;
+        }
+
+        if (queryEmbedding) {
+          try {
+            const vectorQb = qb.clone();
+            vectorQb.andWhere('post.embedding IS NOT NULL');
+            vectorQb.setParameter(
+              'qEmbedding',
+              this.toVectorLiteral(queryEmbedding),
+            );
+            vectorQb.addSelect(
+              'post.embedding <-> :qEmbedding::vector',
+              'distance',
+            );
+            vectorQb.orderBy('distance', 'ASC');
+            vectorQb.skip((page - 1) * limit).take(limit);
+
+            const [items, total] = await vectorQb.getManyAndCount();
+            return {
+              items: items.map((post) => this.toPostDto(post)),
+              total,
+              page,
+              limit,
+            };
+          } catch (e) {
+            this.vectorSearchDisabled = true;
+            this.logger.warn(
+              'Vector search failed; fallback to keyword search.',
+            );
+            this.logger.debug((e as any)?.stack ?? String(e));
+            q = q || vectorQ;
+          }
+        }
       }
-
-      qb.andWhere('post.embedding IS NOT NULL');
-
-      const queryEmbedding = await this.embeddingsService.embedText(vectorQ);
-      qb.setParameter('qEmbedding', this.toVectorLiteral(queryEmbedding));
-      qb.orderBy('post.embedding <-> :qEmbedding::vector', 'ASC');
-      qb.skip((page - 1) * limit).take(limit);
-
-      const [items, total] = await qb.getManyAndCount();
-      return {
-        items: items.map((post) => this.toPostDto(post)),
-        total,
-        page,
-        limit,
-      };
     }
 
     if (q) {
@@ -371,10 +441,17 @@ export class PostsService {
     });
     post.category = category;
 
-    if (this.embeddingsService.apiKey) {
-      post.embedding = await this.embeddingsService.embedText(
-        this.buildEmbeddingText(post),
-      );
+    if (this.embeddingsService.apiKey && !this.embeddingsServiceDisabled) {
+      try {
+        post.embedding = await this.embeddingsService.embedText(
+          this.buildEmbeddingText(post),
+        );
+      } catch (e) {
+        this.embeddingsServiceDisabled = true;
+        this.logger.warn('Embeddings generate failed; continue without it.');
+        this.logger.debug((e as any)?.stack ?? String(e));
+        post.embedding = null;
+      }
     }
     const saved = await this.postRepository.save(post);
     saved.category = category;
@@ -414,10 +491,21 @@ export class PostsService {
       dto.title !== undefined ||
       dto.excerpt !== undefined ||
       dto.content !== undefined;
-    if (shouldReEmbed && this.embeddingsService.apiKey) {
-      post.embedding = await this.embeddingsService.embedText(
-        this.buildEmbeddingText(post),
-      );
+    if (
+      shouldReEmbed &&
+      this.embeddingsService.apiKey &&
+      !this.embeddingsServiceDisabled
+    ) {
+      try {
+        post.embedding = await this.embeddingsService.embedText(
+          this.buildEmbeddingText(post),
+        );
+      } catch (e) {
+        this.embeddingsServiceDisabled = true;
+        this.logger.warn('Embeddings generate failed; continue without it.');
+        this.logger.debug((e as any)?.stack ?? String(e));
+        post.embedding = null;
+      }
     }
 
     const saved = await this.postRepository.save(post);
