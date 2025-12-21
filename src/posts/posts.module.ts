@@ -4,9 +4,10 @@ import { Post } from './post.entity';
 import { PostsController } from './posts.controller';
 import { PostsService } from './posts.service';
 import { EmbeddingsService } from './embeddings.service';
+import { Category } from '../categories/category.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Post])],
+  imports: [TypeOrmModule.forFeature([Post, Category])],
   controllers: [PostsController],
   providers: [PostsService, EmbeddingsService],
   exports: [PostsService],

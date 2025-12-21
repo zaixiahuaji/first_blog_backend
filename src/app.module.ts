@@ -8,6 +8,7 @@ import { ensureDatabaseExists } from './db/ensure-database';
 import { ensurePgVectorExtension } from './db/ensure-extensions';
 import { AuthModule } from './auth/auth.module';
 import { DbIndexesService } from './db/db-indexes.service';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { DbIndexesService } from './db/db-indexes.service';
         };
       },
     }),
+    CategoriesModule,
     PostsModule,
     AuthModule,
   ],

@@ -21,4 +21,4 @@ services:
 
 volumes:
   postgres_data:
-
+    name: Huaji_blog

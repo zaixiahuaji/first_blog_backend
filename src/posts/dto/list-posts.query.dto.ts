@@ -1,4 +1,14 @@
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ListPostsQueryDto {
@@ -30,11 +40,21 @@ export class ListPostsQueryDto {
   @IsIn(['ASC', 'DESC'])
   order?: 'ASC' | 'DESC';
 
-  @ApiPropertyOptional({ enum: ['tech', 'music', 'visuals'] })
+  @ApiPropertyOptional({
+    example: 'tech',
+    description: '类别 slug（仅字母/数字/下划线，<=12，强制小写）',
+    maxLength: 12,
+  })
   @IsOptional()
   @IsString()
-  @IsIn(['tech', 'music', 'visuals'])
-  category?: 'tech' | 'music' | 'visuals';
+  @MaxLength(12)
+  @Matches(/^[a-z0-9_]{1,12}$/, {
+    message: 'category must match ^[a-z0-9_]{1,12}$',
+  })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
+  category?: string;
 
   @ApiPropertyOptional({ description: '关键词搜索（ILIKE）' })
   @IsOptional()

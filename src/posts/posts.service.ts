@@ -2,19 +2,21 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
+import { Category } from '../categories/category.entity';
 import { Post } from './post.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { ListPostsQueryDto } from './dto/list-posts.query.dto';
-import { NotFoundException } from '@nestjs/common';
 import { EmbeddingsService } from './embeddings.service';
 import {
   PostsCategoriesStatsDto,
   PostsTotalDto,
 } from './dto/posts-stats.dto';
+import { PostDto } from './dto/post.dto';
 
 export type PaginatedResult<T> = {
   items: T[];
@@ -30,11 +32,20 @@ type CurrentUser = {
   role?: string;
 };
 
-const DEFAULT_POSTS: DeepPartial<Post>[] = [
+type SeedPost = {
+  username: string;
+  title: string;
+  categorySlug: string;
+  date: string;
+  excerpt: string;
+  content: string;
+};
+
+const DEFAULT_POSTS: SeedPost[] = [
   {
     username: 'admin',
     title: '模拟复兴',
-    category: 'tech',
+    categorySlug: 'tech',
     date: '2023-11-05',
     excerpt: '为何我们在触摸屏的世界中回归触觉界面。按键的咔哒声很重要。',
     content:
@@ -43,7 +54,7 @@ const DEFAULT_POSTS: DeepPartial<Post>[] = [
   {
     username: 'admin',
     title: '霓虹夜与城市之光',
-    category: 'visuals',
+    categorySlug: 'visuals',
     date: '2023-10-31',
     excerpt: '探索80年代末动画的赛博黑色美学及其对现代网页设计的影响。',
     content:
@@ -52,7 +63,7 @@ const DEFAULT_POSTS: DeepPartial<Post>[] = [
   {
     username: 'admin',
     title: '合成器基础',
-    category: 'music',
+    categorySlug: 'music',
     date: '2023-10-15',
     excerpt: '了解FM合成与减法合成的区别。让我们制造一些噪音。',
     content:
@@ -61,7 +72,7 @@ const DEFAULT_POSTS: DeepPartial<Post>[] = [
   {
     username: 'admin',
     title: '磁带维护 101',
-    category: 'tech',
+    categorySlug: 'tech',
     date: '2023-09-22',
     excerpt: '如何仅用一支铅笔和耐心修复缠绕的磁带。不要丢失你的记忆。',
     content:
@@ -70,7 +81,7 @@ const DEFAULT_POSTS: DeepPartial<Post>[] = [
   {
     username: 'admin',
     title: '虚空中的矢量',
-    category: 'visuals',
+    categorySlug: 'visuals',
     date: '2023-09-10',
     excerpt: '线框图形之美。当更少的几何形状意味着更多的想象力。',
     content:
@@ -79,7 +90,7 @@ const DEFAULT_POSTS: DeepPartial<Post>[] = [
   {
     username: 'admin',
     title: '暗潮播放列表',
-    category: 'music',
+    categorySlug: 'music',
     date: '2023-08-30',
     excerpt: '深夜黑客会话的精选曲目。为明亮头脑准备的阴郁节拍。',
     content:
@@ -95,6 +106,8 @@ export class PostsService {
   constructor(
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
     private readonly embeddingsService: EmbeddingsService,
   ) {}
 
@@ -102,11 +115,50 @@ export class PostsService {
     return (q ?? '').trim();
   }
 
+  private toPostDto(post: Post): PostDto {
+    return {
+      id: post.id,
+      username: post.username,
+      title: post.title,
+      category: post.category?.slug ?? 'other',
+      date: post.date,
+      excerpt: post.excerpt,
+      content: post.content,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+    };
+  }
+
   private async ensureSeeded(): Promise<void> {
     const count = await this.postRepository.count();
     if (count > 0) return;
 
-    const seeded = this.postRepository.create(DEFAULT_POSTS);
+    const neededSlugs = Array.from(
+      new Set(DEFAULT_POSTS.map((post) => post.categorySlug)),
+    );
+
+    const categories = await this.categoryRepository.find({
+      where: { slug: In(neededSlugs) },
+    });
+    const idBySlug = new Map(categories.map((c) => [c.slug, c.id]));
+
+    const other = await this.categoryRepository.findOne({
+      where: { slug: 'other' },
+    });
+    if (!other) {
+      throw new Error('System category "other" is missing.');
+    }
+
+    const seeded = this.postRepository.create(
+      DEFAULT_POSTS.map((seed) => ({
+        username: seed.username,
+        title: seed.title,
+        categoryId: idBySlug.get(seed.categorySlug) ?? other.id,
+        date: seed.date,
+        excerpt: seed.excerpt,
+        content: seed.content,
+      })),
+    );
     await this.postRepository.save(seeded);
   }
 
@@ -149,7 +201,9 @@ export class PostsService {
     return this.backfillPromise;
   }
 
-  async findAll(queryDto: ListPostsQueryDto): Promise<PaginatedResult<Post>> {
+  async findAll(
+    queryDto: ListPostsQueryDto,
+  ): Promise<PaginatedResult<PostDto>> {
     await this.ensureSeeded();
     await this.backfillEmbeddingsOnce();
 
@@ -159,12 +213,20 @@ export class PostsService {
     const order = queryDto.order ?? 'DESC';
     const q = this.normalizeQuery(queryDto.q);
     const vectorQ = this.normalizeQuery(queryDto.vectorQ);
-    const category = queryDto.category;
+    const categorySlug = queryDto.category;
 
-    const qb = this.postRepository.createQueryBuilder('post');
+    const qb = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.category', 'category');
 
-    if (category) {
-      qb.andWhere('post.category = :category', { category });
+    if (categorySlug) {
+      const category = await this.categoryRepository.findOne({
+        where: { slug: categorySlug },
+      });
+      if (!category) {
+        return { items: [], total: 0, page, limit };
+      }
+      qb.andWhere('post.categoryId = :categoryId', { categoryId: category.id });
     }
 
     // vectorQ 优先：有语义搜索就走 pgvector；否则走原有 ILIKE 关键词搜索
@@ -183,7 +245,12 @@ export class PostsService {
       qb.skip((page - 1) * limit).take(limit);
 
       const [items, total] = await qb.getManyAndCount();
-      return { items, total, page, limit };
+      return {
+        items: items.map((post) => this.toPostDto(post)),
+        total,
+        page,
+        limit,
+      };
     }
 
     if (q) {
@@ -203,14 +270,22 @@ export class PostsService {
     qb.skip((page - 1) * limit).take(limit);
 
     const [items, total] = await qb.getManyAndCount();
-    return { items, total, page, limit };
+    return {
+      items: items.map((post) => this.toPostDto(post)),
+      total,
+      page,
+      limit,
+    };
   }
 
-  async findOne(id: string): Promise<Post> {
+  async findOne(id: string): Promise<PostDto> {
     await this.ensureSeeded();
-    const post = await this.postRepository.findOne({ where: { id } });
+    const post = await this.postRepository.findOne({
+      where: { id },
+      relations: { category: true },
+    });
     if (!post) throw new NotFoundException('Post not found');
-    return post;
+    return this.toPostDto(post);
   }
 
   async getTotal(): Promise<PostsTotalDto> {
@@ -222,18 +297,31 @@ export class PostsService {
   async getCategoriesStats(): Promise<PostsCategoriesStatsDto> {
     await this.ensureSeeded();
 
-    const rows = await this.postRepository
+    const categories = await this.categoryRepository.find({
+      order: { sortOrder: 'ASC', createdAt: 'ASC' },
+    });
+
+    const counts = await this.postRepository
       .createQueryBuilder('post')
-      .select('post.category', 'category')
+      .select('post.categoryId', 'categoryId')
       .addSelect('COUNT(*)', 'count')
-      .groupBy('post.category')
-      .orderBy('post.category', 'ASC')
-      .getRawMany<{ category: string; count: string }>();
+      .groupBy('post.categoryId')
+      .getRawMany<{ categoryId: string; count: string }>();
+
+    const countByCategoryId = new Map(
+      counts.map((row) => [row.categoryId, Number(row.count)]),
+    );
 
     return {
-      categories: rows.map((row) => ({
-        category: row.category,
-        count: Number(row.count),
+      categories: categories.map((category) => ({
+        id: category.id,
+        slug: category.slug,
+        name: category.name,
+        color: category.color,
+        sortOrder: category.sortOrder,
+        isActive: category.isActive,
+        isSystem: category.isSystem,
+        count: countByCategoryId.get(category.id) ?? 0,
       })),
     };
   }
@@ -249,7 +337,7 @@ export class PostsService {
 
   private assertAuthorOrAdmin(
     user: { username: string; role: string },
-    post: Post,
+    post: { username: string },
   ) {
     if (user.role === 'admin') return;
     if (post.username !== user.username) {
@@ -257,29 +345,70 @@ export class PostsService {
     }
   }
 
-  async create(dto: CreatePostDto, currentUser: CurrentUser): Promise<Post> {
+  private async mustGetCategoryBySlug(slug: string): Promise<Category> {
+    const category = await this.categoryRepository.findOne({
+      where: { slug },
+    });
+    if (!category) {
+      throw new BadRequestException(`Category "${slug}" not found`);
+    }
+    return category;
+  }
+
+  async create(dto: CreatePostDto, currentUser: CurrentUser): Promise<PostDto> {
     this.assertCurrentUser(currentUser);
-    const post = this.postRepository.create({ ...dto, username: currentUser.username });
+
+    const category = await this.mustGetCategoryBySlug(dto.category);
+    if (!category.isActive) {
+      throw new BadRequestException('Category is inactive');
+    }
+
+    const { category: _category, ...rest } = dto;
+    const post = this.postRepository.create({
+      ...rest,
+      username: currentUser.username,
+      categoryId: category.id,
+    });
+    post.category = category;
+
     if (this.embeddingsService.apiKey) {
       post.embedding = await this.embeddingsService.embedText(
         this.buildEmbeddingText(post),
       );
     }
     const saved = await this.postRepository.save(post);
-    delete (saved as { embedding?: unknown }).embedding;
-    return saved;
+    saved.category = category;
+    return this.toPostDto(saved);
   }
 
   async update(
     id: string,
     dto: UpdatePostDto,
     currentUser: CurrentUser,
-  ): Promise<Post> {
+  ): Promise<PostDto> {
     this.assertCurrentUser(currentUser);
-    const post = await this.findOne(id);
+
+    const post = await this.postRepository.findOne({
+      where: { id },
+      relations: { category: true },
+    });
+    if (!post) throw new NotFoundException('Post not found');
+
     this.assertAuthorOrAdmin(currentUser, post);
 
-    Object.assign(post, dto);
+    const nextCategorySlug = dto.category;
+    const { category: _category, ...rest } = dto;
+    Object.assign(post, rest);
+
+    if (nextCategorySlug !== undefined) {
+      const nextCategory = await this.mustGetCategoryBySlug(nextCategorySlug);
+      const isCategoryChanged = nextCategory.id !== post.categoryId;
+      if (isCategoryChanged && !nextCategory.isActive) {
+        throw new BadRequestException('Category is inactive');
+      }
+      post.categoryId = nextCategory.id;
+      post.category = nextCategory;
+    }
 
     const shouldReEmbed =
       dto.title !== undefined ||
@@ -292,13 +421,14 @@ export class PostsService {
     }
 
     const saved = await this.postRepository.save(post);
-    delete (saved as { embedding?: unknown }).embedding;
-    return saved;
+    saved.category = post.category;
+    return this.toPostDto(saved);
   }
 
   async remove(id: string, currentUser: CurrentUser): Promise<void> {
     this.assertCurrentUser(currentUser);
-    const post = await this.findOne(id);
+    const post = await this.postRepository.findOne({ where: { id } });
+    if (!post) throw new NotFoundException('Post not found');
     this.assertAuthorOrAdmin(currentUser, post);
     await this.postRepository.remove(post);
   }

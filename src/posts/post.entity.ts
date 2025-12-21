@@ -3,9 +3,13 @@ import {
   type ColumnOptions,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { Category } from '../categories/category.entity';
 
 const DEFAULT_EMBEDDING_DIMS = 1024;
 const VECTOR_COLUMN_TYPE = 'vector' as unknown as NonNullable<
@@ -34,8 +38,13 @@ export class Post {
   @Column({ length: 255 })
   title: string;
 
-  @Column({ length: 50 })
-  category: string;
+  @Index()
+  @Column({ type: 'uuid' })
+  categoryId: string;
+
+  @ManyToOne(() => Category, { nullable: false, onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'categoryId' })
+  category: Category;
 
   // 字符串日期，方便前端直接展示
   @Column({ type: 'varchar', length: 32 })
