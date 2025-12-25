@@ -14,13 +14,10 @@ export class User {
   @Column({ unique: true, length: 12 })
   username: string;
 
-  @Column({ unique: true, length: 255 })
-  email: string;
-
   @Column({ type: 'text' })
   passwordHash: string;
 
-  @Column({ length: 50, default: 'admin' })
+  @Column({ length: 50, default: 'user' })
   role: string;
 
   @CreateDateColumn()

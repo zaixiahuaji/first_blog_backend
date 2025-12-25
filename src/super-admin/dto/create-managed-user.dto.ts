@@ -1,10 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsAlphanumeric, IsNotEmpty, Matches, MaxLength, MinLength } from 'class-validator';
-import { INVITE_CODE_REGEX } from '../invite-code.utils';
+import { IsAlphanumeric, IsIn, IsNotEmpty, Matches, MaxLength, MinLength } from 'class-validator';
 
-export class RegisterDto {
+export class CreateManagedUserDto {
   @ApiProperty({
-    example: 'cool_user',
+    example: 'new_user',
     description: '用户名唯一，中文/英文/数字/下划线',
     maxLength: 12,
   })
@@ -16,17 +15,6 @@ export class RegisterDto {
   username: string;
 
   @ApiProperty({
-    example: 'ABCD-1234',
-    description: '邀请码必须为大写，格式 XXXX-XXXX',
-    maxLength: 9,
-  })
-  @IsNotEmpty()
-  @Matches(INVITE_CODE_REGEX, {
-    message: '邀请码格式必须为 XXXX-XXXX（大写字母/数字）',
-  })
-  inviteCode: string;
-
-  @ApiProperty({
     example: 'abc123',
     description: '仅字母和数字，长度 1-10',
     maxLength: 10,
@@ -36,4 +24,8 @@ export class RegisterDto {
   @MinLength(1)
   @MaxLength(10)
   password: string;
+
+  @ApiProperty({ enum: ['user', 'admin'] })
+  @IsIn(['user', 'admin'])
+  role: 'user' | 'admin';
 }

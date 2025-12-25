@@ -9,6 +9,7 @@ import { ensurePgVectorExtension } from './db/ensure-extensions';
 import { AuthModule } from './auth/auth.module';
 import { DbIndexesService } from './db/db-indexes.service';
 import { CategoriesModule } from './categories/categories.module';
+import { SuperAdminModule } from './super-admin/super-admin.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { CategoriesModule } from './categories/categories.module';
     CategoriesModule,
     PostsModule,
     AuthModule,
+    SuperAdminModule,
   ],
   controllers: [AppController],
   providers: [AppService, DbIndexesService],

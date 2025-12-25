@@ -30,7 +30,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 @ApiTags('admin.categories')
 @ApiBearerAuth('BearerAuth')
 @ApiUnauthorizedResponse({ description: '未登录或 token 无效' })
-@Roles('admin')
+@Roles('admin', 'super_admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('admin/categories')
 export class AdminCategoriesController {
@@ -72,4 +72,3 @@ export class AdminCategoriesController {
     await this.categoriesService.remove(id);
   }
 }
-

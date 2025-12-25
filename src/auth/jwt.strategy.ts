@@ -5,7 +5,6 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 
 export type JwtPayload = {
   sub: string;
-  email: string;
   role: string;
   username?: string;
 };
@@ -24,7 +23,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // 这里返回的对象会挂到 req.user
     return {
       userId: payload.sub,
-      email: payload.email,
       role: payload.role,
       username: payload.username,
     };
