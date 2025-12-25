@@ -5,10 +5,13 @@ services:
     image: pgvector/pgvector:pg16
     container_name: cs_vue3_postgres
     restart: unless-stopped
+    command: ['postgres', '-c', 'timezone=UTC', '-c', 'log_timezone=UTC']
     environment:
       POSTGRES_DB: ${DB_NAME:-appdb}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+      TZ: UTC
+      PGTZ: UTC
     ports:
       - '5432:5432'
     volumes:

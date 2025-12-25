@@ -32,10 +32,9 @@ export class Category {
   @Column({ type: 'boolean', default: false })
   isSystem: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }
-
