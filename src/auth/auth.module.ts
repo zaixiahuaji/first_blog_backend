@@ -39,5 +39,6 @@ export class AuthModule implements OnModuleInit {
 
   async onModuleInit() {
     await this.authService.ensureDevSuperAdmin();
+    await this.authService.ensureDevDemoAdmin();
   }
 }

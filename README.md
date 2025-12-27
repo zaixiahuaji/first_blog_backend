@@ -21,7 +21,7 @@ docker run -d `
   -c shared_preload_libraries=vector
 ```
 
-> 如果你改用 `docker-compose up -d`，请确保 `docker-compose.yml` 使用的是 `pgvector/pgvector:*`，否则项目启动时创建 `vector` 扩展会失败。
+> 如果改用 `docker-compose up -d`，请确保 `docker-compose.yml` 使用的是 `pgvector/pgvector:*`，否则项目启动时创建 `vector` 扩展会失败。
 
 ### 2) 配置环境变量
 

@@ -44,7 +44,7 @@ type SeedPost = {
 
 const DEFAULT_POSTS: SeedPost[] = [
   {
-    username: 'admin',
+    username: '滑稽',
     title: '模拟复兴',
     categorySlug: 'tech',
     date: '2023-11-05',
@@ -53,7 +53,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '在触摸屏主导的今天，物理反馈的缺失让人感到空虚。机械键盘的敲击声、老式收音机的旋钮阻尼，这些触觉体验不仅仅是怀旧，更是人机交互中不可或缺的确认感。模拟复兴不是倒退，而是重新找回被数字洪流冲刷掉的质感。',
   },
   {
-    username: 'admin',
+    username: '滑稽',
     title: '霓虹夜与城市之光',
     categorySlug: 'visuals',
     date: '2023-10-31',
@@ -62,7 +62,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '赛博朋克美学不仅仅是霓虹灯和雨夜。它探讨的是高科技与低生活的反差。80年代末的动画作品通过高对比度的色彩、复杂的机械细节和阴郁的氛围，构建了一个既迷人又危险的未来。这种视觉语言正在现代网页设计中复苏，提醒我们关注技术的阴暗面。',
   },
   {
-    username: 'admin',
+    username: '滑稽',
     title: '合成器基础',
     categorySlug: 'music',
     date: '2023-10-15',
@@ -71,7 +71,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '合成器不仅仅是制造声音的机器，它们是塑造情绪的工具。FM合成带来金属质感的冰冷音色，而减法合成则提供温暖厚实的基底。掌握波形、包络和滤波器的关系，你就能从无到有地构建出属于未来的声音图景。',
   },
   {
-    username: 'admin',
+    username: '滑稽',
     title: '磁带维护 101',
     categorySlug: 'tech',
     date: '2023-09-22',
@@ -80,7 +80,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '磁带是脆弱的记忆载体，但也是有温度的。当磁带缠绕时，不要慌张。准备一支六棱铅笔，轻轻插入卷轴孔，顺时针缓慢旋转。这不仅是修复物理介质，更是一场与过去时光的微型手术。保持耐心，记忆终将归位。',
   },
   {
-    username: 'admin',
+    username: '滑稽',
     title: '虚空中的矢量',
     categorySlug: 'visuals',
     date: '2023-09-10',
@@ -89,7 +89,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '早期计算机图形学的限制造就了独特的矢量美学。在算力匮乏的年代，仅用简单的线条和几何形状构建三维空间，需要极大的创造力。这种极简主义在今天依然具有震撼力，它告诉我们：限制往往是创新的催化剂。',
   },
   {
-    username: 'admin',
+    username: '滑稽',
     title: '暗潮播放列表',
     categorySlug: 'music',
     date: '2023-08-30',
@@ -105,6 +105,7 @@ export class PostsService {
   private embeddingsServiceDisabled = false;
   private vectorSearchDisabled = false;
   private backfillPromise: Promise<void> | null = null;
+  private seedAuthorMigrated = false;
   private readonly logger = new Logger(PostsService.name);
 
   constructor(
@@ -135,7 +136,10 @@ export class PostsService {
 
   private async ensureSeeded(): Promise<void> {
     const count = await this.postRepository.count();
-    if (count > 0) return;
+    if (count > 0) {
+      await this.migrateLegacySeedAuthorOnce();
+      return;
+    }
 
     const neededSlugs = Array.from(
       new Set(DEFAULT_POSTS.map((post) => post.categorySlug)),
@@ -164,6 +168,26 @@ export class PostsService {
     }
 
     await this.seedPostsWithFallback(other.id, idBySlug);
+  }
+
+  private async migrateLegacySeedAuthorOnce(): Promise<void> {
+    if (this.seedAuthorMigrated) return;
+    this.seedAuthorMigrated = true;
+    if (process.env.NODE_ENV === 'production') return;
+
+    const legacyUsername: string = 'admin';
+    const nextUsername: string = '滑稽';
+
+    const titles = DEFAULT_POSTS.map((post) => post.title);
+    if (titles.length === 0) return;
+
+    await this.postRepository
+      .createQueryBuilder()
+      .update(Post)
+      .set({ username: nextUsername })
+      .where('username = :legacyUsername', { legacyUsername })
+      .andWhere('title IN (:...titles)', { titles })
+      .execute();
   }
 
   private async seedPostsWithFallback(

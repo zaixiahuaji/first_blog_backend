@@ -24,6 +24,50 @@ export class AuthService {
   ) {}
 
   /**
+   * 开发期：创建一个演示用的 admin 账号（便于登录管理，也与示例文章作者一致）。
+   * 生产环境（NODE_ENV=production）默认不自动创建，避免引入固定弱口令账号。
+   */
+  async ensureDevDemoAdmin(): Promise<void> {
+    if (process.env.NODE_ENV === 'production') return;
+
+    const username = this.config.get<string>('DEV_ADMIN_USERNAME', '滑稽');
+    const password = this.config.get<string>('DEV_ADMIN_PASSWORD', 'hj123');
+
+    ensureUsernameRules(username);
+    ensurePasswordRules(password);
+
+    const existing = await this.userRepository.findOne({
+      where: { username },
+    });
+    if (existing) {
+      if (existing.role === 'super_admin') return;
+
+      let changed = false;
+      if (existing.role !== 'admin') {
+        existing.role = 'admin';
+        changed = true;
+      }
+
+      const passwordOk = await bcrypt.compare(password, existing.passwordHash);
+      if (!passwordOk) {
+        existing.passwordHash = await bcrypt.hash(password, 10);
+        changed = true;
+      }
+
+      if (changed) await this.userRepository.save(existing);
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = this.userRepository.create({
+      username,
+      passwordHash,
+      role: 'admin',
+    });
+    await this.userRepository.save(user);
+  }
+
+  /**
    * 开发期：确保至少有一个可登录的 super_admin，避免“先做管理端但没法登录”的死锁。
    * 可通过环境变量覆盖：
    * - SUPER_ADMIN_USERNAME / SUPER_ADMIN_PASSWORD

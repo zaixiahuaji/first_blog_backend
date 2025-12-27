@@ -1,9 +1,6 @@
-version: '3.9'
-
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: cs_vue3_postgres
     restart: unless-stopped
     command: ['postgres', '-c', 'timezone=UTC', '-c', 'log_timezone=UTC']
     environment:
@@ -12,8 +9,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS:-postgres}
       TZ: UTC
       PGTZ: UTC
+    # 仅供本机开发连接（避免把 5432 暴露到公网）
     ports:
-      - '5432:5432'
+      - '127.0.0.1:${DB_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
