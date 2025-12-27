@@ -3,6 +3,9 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { Express, Request, Response } from 'express';
+import * as express from 'express';
+import { join } from 'path';
+import { promises as fs } from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,6 +23,10 @@ async function bootstrap() {
     origin: process.env.FRONTEND_ORIGIN?.split(',') ?? true,
     credentials: true,
   });
+
+  const uploadsRoot = join(process.cwd(), 'uploads');
+  await fs.mkdir(uploadsRoot, { recursive: true });
+  app.use('/uploads', express.static(uploadsRoot));
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Personal Blog API')

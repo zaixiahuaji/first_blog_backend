@@ -10,7 +10,7 @@ dist/
 build/
 out/
 *.tsbuildinfo
-
+uploads/
 # test / coverage
 coverage/
 .nyc_output/
