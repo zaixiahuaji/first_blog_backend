@@ -47,6 +47,13 @@ export class PostsController {
     return this.postsService.findAll(query) as any;
   }
 
+  @Get('total')
+  @ApiOperation({ summary: '获取文章总数（兼容旧路径）' })
+  @ApiOkResponse({ description: '文章总数', type: PostsTotalDto })
+  getTotalCompat(): Promise<PostsTotalDto> {
+    return this.postsService.getTotal();
+  }
+
   @Get('stats/total')
   @ApiOperation({ summary: '获取文章总数' })
   @ApiOkResponse({ description: '文章总数', type: PostsTotalDto })

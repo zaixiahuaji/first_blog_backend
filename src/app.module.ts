@@ -11,6 +11,7 @@ import { DbIndexesService } from './db/db-indexes.service';
 import { CategoriesModule } from './categories/categories.module';
 import { SuperAdminModule } from './super-admin/super-admin.module';
 import { MediaModule } from './media/media.module';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { MediaModule } from './media/media.module';
     AuthModule,
     SuperAdminModule,
     MediaModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [AppService, DbIndexesService],
