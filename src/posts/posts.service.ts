@@ -45,7 +45,7 @@ type SeedPost = {
 const DEFAULT_POSTS: SeedPost[] = [
   {
     username: '滑稽',
-    title: '模拟复兴',
+    title: '模拟复兴（AI生成）',
     categorySlug: 'tech',
     date: '2023-11-05',
     excerpt: '为何我们在触摸屏的世界中回归触觉界面。按键的咔哒声很重要。',
@@ -54,7 +54,7 @@ const DEFAULT_POSTS: SeedPost[] = [
   },
   {
     username: '滑稽',
-    title: '霓虹夜与城市之光',
+    title: '霓虹夜与城市之光（AI生成）',
     categorySlug: 'visuals',
     date: '2023-10-31',
     excerpt: '探索80年代末动画的赛博黑色美学及其对现代网页设计的影响。',
@@ -63,7 +63,7 @@ const DEFAULT_POSTS: SeedPost[] = [
   },
   {
     username: '滑稽',
-    title: '合成器基础',
+    title: '合成器基础（AI生成）',
     categorySlug: 'music',
     date: '2023-10-15',
     excerpt: '了解FM合成与减法合成的区别。让我们制造一些噪音。',
@@ -72,7 +72,7 @@ const DEFAULT_POSTS: SeedPost[] = [
   },
   {
     username: '滑稽',
-    title: '磁带维护 101',
+    title: '磁带维护 101（AI生成）',
     categorySlug: 'tech',
     date: '2023-09-22',
     excerpt: '如何仅用一支铅笔和耐心修复缠绕的磁带。不要丢失你的记忆。',
@@ -81,7 +81,7 @@ const DEFAULT_POSTS: SeedPost[] = [
   },
   {
     username: '滑稽',
-    title: '虚空中的矢量',
+    title: '虚空中的矢量（AI生成）',
     categorySlug: 'visuals',
     date: '2023-09-10',
     excerpt: '线框图形之美。当更少的几何形状意味着更多的想象力。',
@@ -90,7 +90,7 @@ const DEFAULT_POSTS: SeedPost[] = [
   },
   {
     username: '滑稽',
-    title: '暗潮播放列表',
+    title: '暗潮播放列表（AI生成）',
     categorySlug: 'music',
     date: '2023-08-30',
     excerpt: '深夜黑客会话的精选曲目。为明亮头脑准备的阴郁节拍。',

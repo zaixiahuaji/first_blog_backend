@@ -3,6 +3,7 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MetricsService } from './metrics.service';
 import { MetricsPageviewsDto } from './dto/metrics-pageviews.dto';
 import { MetricsStorageDto } from './dto/metrics-storage.dto';
+import { MetricsMemoryDto } from './dto/metrics-memory.dto';
 
 @ApiTags('metrics')
 @Controller('metrics')
@@ -22,5 +23,13 @@ export class MetricsController {
   @ApiOkResponse({ description: 'Root partition usage', type: MetricsStorageDto })
   getStorageUsage(): Promise<MetricsStorageDto> {
     return this.metricsService.getStorageUsage();
+  }
+
+  @Get('memory')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Get memory usage.' })
+  @ApiOkResponse({ description: 'Memory usage', type: MetricsMemoryDto })
+  getMemoryUsage(): MetricsMemoryDto {
+    return this.metricsService.getMemoryUsage();
   }
 }

@@ -3,8 +3,10 @@ import { DataSource } from 'typeorm';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parse } from 'node:path';
+import { freemem, totalmem } from 'node:os';
 import { MetricsPageviewsDto } from './dto/metrics-pageviews.dto';
 import { MetricsStorageDto } from './dto/metrics-storage.dto';
+import { MetricsMemoryDto } from './dto/metrics-memory.dto';
 
 const execFileAsync = promisify(execFile);
 
@@ -36,6 +38,30 @@ export class MetricsService {
 
     return {
       path: targetPath,
+      usedPercent,
+    };
+  }
+
+  getMemoryUsage(): MetricsMemoryDto {
+    const totalBytesRaw = totalmem();
+    const freeBytesRaw = freemem();
+
+    const totalBytes =
+      Number.isFinite(totalBytesRaw) && totalBytesRaw > 0 ? totalBytesRaw : 0;
+    const freeBytes =
+      Number.isFinite(freeBytesRaw) && freeBytesRaw > 0 ? freeBytesRaw : 0;
+
+    const usedBytes = Math.max(0, totalBytes - freeBytes);
+    const usedPercentRaw =
+      totalBytes > 0 ? (usedBytes / totalBytes) * 100 : 0;
+    const usedPercent = Number.isFinite(usedPercentRaw)
+      ? Number(usedPercentRaw.toFixed(1))
+      : 0;
+
+    return {
+      totalBytes,
+      freeBytes,
+      usedBytes,
       usedPercent,
     };
   }
