@@ -15,6 +15,15 @@ export const THEME_COLORS = [
   '#00aaaa',
   '#6600cc',
   '#cc3300',
+  '#ff0055',
+  '#00ccff',
+  '#00e676',
+  '#d500f9',
+  '#ffd600',
+  '#2962ff',
+  '#6200ea',
+  '#c51162',
+  '#00c853',
 ] as const;
 
 export type ThemeColor = (typeof THEME_COLORS)[number];
@@ -35,4 +44,3 @@ export const SYSTEM_CATEGORIES_SEED: Array<{
   { slug: 'visuals', name: '视觉', color: '#00a3cc', sortOrder: 30, isActive: true },
   { slug: 'other', name: '其他', color: '#00aaaa', sortOrder: 40, isActive: true },
 ];
-
