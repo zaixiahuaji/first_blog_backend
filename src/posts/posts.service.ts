@@ -99,7 +99,7 @@ const DEFAULT_POSTS: SeedPost[] = [
   },
   {
     username: '滑稽',
-    title: '系统过载',
+    title: '系统过载（AI生成）',
     categorySlug: 'tech',
     date: '2023-08-15',
     excerpt: '当CPU温度达到临界值时发生的奇妙现象。硬件的极限在哪里？',
@@ -108,7 +108,7 @@ const DEFAULT_POSTS: SeedPost[] = [
   },
   {
     username: '滑稽',
-    title: '像素艺术概论',
+    title: '像素艺术概论（AI生成）',
     categorySlug: 'visuals',
     date: '2023-08-01',
     excerpt: '在有限的分辨率下创造无限的世界。每一个点都有意义。',
@@ -117,7 +117,7 @@ const DEFAULT_POSTS: SeedPost[] = [
   },
   {
     username: '滑稽',
-    title: '低保真波形',
+    title: '低保真波形（AI生成）',
     categorySlug: 'music',
     date: '2023-07-20',
     excerpt: '为什么Lo-Fi音乐能提高专注力？噪声背后的科学。',
@@ -126,7 +126,7 @@ const DEFAULT_POSTS: SeedPost[] = [
   },
   {
     username: '滑稽',
-    title: '工业设计美学',
+    title: '工业设计美学（AI生成）',
     categorySlug: 'visuals',
     date: '2023-07-10',
     excerpt: 'Braun设计语言与现代UI的碰撞。少即是多。',
@@ -135,7 +135,7 @@ const DEFAULT_POSTS: SeedPost[] = [
   },
   {
     username: '滑稽',
-    title: '软盘数据恢复',
+    title: '软盘数据恢复（AI生成）',
     categorySlug: 'tech',
     date: '2023-06-25',
     excerpt: '从损坏的磁性介质中提取数据。数字考古学入门。',
@@ -144,7 +144,7 @@ const DEFAULT_POSTS: SeedPost[] = [
   },
   {
     username: '滑稽',
-    title: '深网协议',
+    title: '深网协议（AI生成）',
     categorySlug: 'tech',
     date: '2023-06-01',
     excerpt: '在万维网出现之前的通信协议。BBS与其遗产。',
