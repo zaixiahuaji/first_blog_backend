@@ -40,7 +40,7 @@ export const SYSTEM_CATEGORIES_SEED: Array<{
   isActive: boolean;
 }> = [
   { slug: 'tech', name: '技术日志', color: '#ff8800', sortOrder: 10, isActive: true },
-  { slug: 'music', name: '音乐', color: '#e62e2e', sortOrder: 20, isActive: true },
+  { slug: 'music', name: '音乐', color: '#cc3300', sortOrder: 20, isActive: true },
   { slug: 'visuals', name: '视觉影像', color: '#00a3cc', sortOrder: 30, isActive: true },
   { slug: 'other', name: '其他', color: '#00aaaa', sortOrder: 40, isActive: true },
 ];
