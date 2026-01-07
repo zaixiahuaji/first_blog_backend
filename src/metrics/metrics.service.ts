@@ -3,10 +3,11 @@ import { DataSource } from 'typeorm';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parse } from 'node:path';
-import { freemem, totalmem } from 'node:os';
+import { freemem, totalmem, uptime as osUptime } from 'node:os';
 import { MetricsPageviewsDto } from './dto/metrics-pageviews.dto';
 import { MetricsStorageDto } from './dto/metrics-storage.dto';
 import { MetricsMemoryDto } from './dto/metrics-memory.dto';
+import { MetricsUptimeDto } from './dto/metrics-uptime.dto';
 
 const execFileAsync = promisify(execFile);
 
@@ -64,6 +65,14 @@ export class MetricsService {
       usedBytes,
       usedPercent,
     };
+  }
+
+  getUptime(): MetricsUptimeDto {
+    const rawSeconds = osUptime();
+    const uptimeSeconds =
+      Number.isFinite(rawSeconds) && rawSeconds > 0 ? Math.floor(rawSeconds) : 0;
+
+    return { uptimeSeconds };
   }
 
   private resolveDiskUsagePath(): string {

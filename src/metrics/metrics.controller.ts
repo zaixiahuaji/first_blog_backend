@@ -4,6 +4,7 @@ import { MetricsService } from './metrics.service';
 import { MetricsPageviewsDto } from './dto/metrics-pageviews.dto';
 import { MetricsStorageDto } from './dto/metrics-storage.dto';
 import { MetricsMemoryDto } from './dto/metrics-memory.dto';
+import { MetricsUptimeDto } from './dto/metrics-uptime.dto';
 
 @ApiTags('metrics')
 @Controller('metrics')
@@ -31,5 +32,13 @@ export class MetricsController {
   @ApiOkResponse({ description: 'Memory usage', type: MetricsMemoryDto })
   getMemoryUsage(): MetricsMemoryDto {
     return this.metricsService.getMemoryUsage();
+  }
+
+  @Get('uptime')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Get server uptime.' })
+  @ApiOkResponse({ description: 'Server uptime', type: MetricsUptimeDto })
+  getUptime(): MetricsUptimeDto {
+    return this.metricsService.getUptime();
   }
 }
