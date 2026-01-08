@@ -44,7 +44,7 @@ type SeedPost = {
 
 const DEFAULT_POSTS: SeedPost[] = [
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '模拟复兴（AI生成）',
     categorySlug: 'tech',
     date: '2023-11-05',
@@ -53,7 +53,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '在触摸屏主导的今天，物理反馈的缺失让人感到空虚。机械键盘的敲击声、老式收音机的旋钮阻尼，这些触觉体验不仅仅是怀旧，更是人机交互中不可或缺的确认感。模拟复兴不是倒退，而是重新找回被数字洪流冲刷掉的质感。',
   },
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '霓虹夜与城市之光（AI生成）',
     categorySlug: 'visuals',
     date: '2023-10-31',
@@ -62,7 +62,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '赛博朋克美学不仅仅是霓虹灯和雨夜。它探讨的是高科技与低生活的反差。80年代末的动画作品通过高对比度的色彩、复杂的机械细节和阴郁的氛围，构建了一个既迷人又危险的未来。这种视觉语言正在现代网页设计中复苏，提醒我们关注技术的阴暗面。',
   },
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '合成器基础（AI生成）',
     categorySlug: 'music',
     date: '2023-10-15',
@@ -71,7 +71,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '合成器不仅仅是制造声音的机器，它们是塑造情绪的工具。FM合成带来金属质感的冰冷音色，而减法合成则提供温暖厚实的基底。掌握波形、包络和滤波器的关系，你就能从无到有地构建出属于未来的声音图景。',
   },
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '磁带维护 101（AI生成）',
     categorySlug: 'tech',
     date: '2023-09-22',
@@ -80,7 +80,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '磁带是脆弱的记忆载体，但也是有温度的。当磁带缠绕时，不要慌张。准备一支六棱铅笔，轻轻插入卷轴孔，顺时针缓慢旋转。这不仅是修复物理介质，更是一场与过去时光的微型手术。保持耐心，记忆终将归位。',
   },
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '虚空中的矢量（AI生成）',
     categorySlug: 'visuals',
     date: '2023-09-10',
@@ -89,7 +89,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '早期计算机图形学的限制造就了独特的矢量美学。在算力匮乏的年代，仅用简单的线条和几何形状构建三维空间，需要极大的创造力。这种极简主义在今天依然具有震撼力，它告诉我们：限制往往是创新的催化剂。',
   },
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '暗潮播放列表（AI生成）',
     categorySlug: 'music',
     date: '2023-08-30',
@@ -98,7 +98,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '当城市沉睡，代码在屏幕上跳动，你需要一份特殊的背景音。这里精选了最具沉浸感的暗潮（Darkwave）与合成波曲目。低沉的贝斯线、若隐若现的人声采样，加上稳定的鼓点，助你潜入数字世界的深层。',
   },
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '系统过载（AI生成）',
     categorySlug: 'tech',
     date: '2023-08-15',
@@ -107,7 +107,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '当散热曲线被拉到尽头，硬件会用最直白的方式提醒你：降频、卡顿、甚至瞬间重启。所谓“过载”并不神秘，它是温度、电流与时间共同写下的边界。理解这些边界，你才知道该把性能留给哪里，把余量留给谁。',
   },
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '像素艺术概论（AI生成）',
     categorySlug: 'visuals',
     date: '2023-08-01',
@@ -116,7 +116,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '像素艺术的魅力来自“限制”：固定的网格、有限的颜色、清晰的轮廓。把光影、材质、情绪压缩到几个像素里，本质上是在做取舍。学会用最少的信息讲最完整的故事，你也就学会了设计。',
   },
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '低保真波形（AI生成）',
     categorySlug: 'music',
     date: '2023-07-20',
@@ -125,7 +125,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       'Lo-Fi 的“噪声”并不是缺陷，而是刻意保留的背景：磁带底噪、轻微失真、房间混响。它们给大脑一个稳定的参照系，让注意力更容易落在任务上。于是波形不再追求完美，而是在可控的粗糙里保持节奏。',
   },
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '工业设计美学（AI生成）',
     categorySlug: 'visuals',
     date: '2023-07-10',
@@ -134,7 +134,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       'Braun 的设计语言强调克制：明确的层级、可靠的触感、可预测的操作路径。把这种思路搬到 UI 上，就会得到更少的装饰、更清晰的反馈，以及更稳定的秩序感。当界面像工具一样诚实，审美自然就出现了。',
   },
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '软盘数据恢复（AI生成）',
     categorySlug: 'tech',
     date: '2023-06-25',
@@ -143,7 +143,7 @@ const DEFAULT_POSTS: SeedPost[] = [
       '软盘像一块脆弱的记忆薄片：磁层会老化，目录会损坏，读写头会偏移。恢复的第一步不是强行读取，而是尽可能减少二次伤害：换驱动、调校对位、先做镜像、再在镜像上分析。数字考古的核心，是对每一次读取都保持敬畏。',
   },
   {
-    username: '滑稽',
+    username: '测试账号1',
     title: '深网协议（AI生成）',
     categorySlug: 'tech',
     date: '2023-06-01',
