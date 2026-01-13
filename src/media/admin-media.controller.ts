@@ -26,7 +26,7 @@ import { MediaService } from './media.service';
 @ApiTags('admin.media')
 @ApiBearerAuth('BearerAuth')
 @ApiUnauthorizedResponse({ description: '未登录或 token 无效' })
-@Roles('admin', 'super_admin')
+@Roles('user', 'admin', 'super_admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('admin/media')
 export class AdminMediaController {
